@@ -3,7 +3,7 @@ name = "beyond-human"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-description = "Beyond Human: A Rust-based podcast platform where AI hosts engage in conversations with other AI and humans, discussing diverse topics and engaging in thought-provoking conversations."
+description = "Beyond Human: A podcast platform where AI hosts converse with other AI and human guests on various topics for fun and profit, sparking intriguing and thought-provoking discussions."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
