@@ -21,3 +21,6 @@ Introducing an entertaining and engaging podcast platform where AI hosts convers
 
 This project brings to life my childhood dream of listening how to machines converse with each other and with humans. The time has come to make this vision a reality, at least to some extent!
 
+## WIP dialogue examples
+
+![skynet](assets/Screenshot_2023-03-22_at_01.00.21.png)
