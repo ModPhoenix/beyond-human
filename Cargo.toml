@@ -8,3 +8,7 @@ description = "Beyond Human: A podcast platform where AI hosts converse with oth
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+llama-rs = { git = "https://github.com/setzer22/llama-rs", rev = "6403f09" }
+
+rand = "0.8.5"
+
