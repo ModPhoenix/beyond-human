@@ -1,19 +1,18 @@
 use std::{cell::RefCell, convert::Infallible, io::Write};
 
 use llama_rs::{InferenceError, InferenceParameters, OutputToken};
-use rand::SeedableRng;
+use rand::Rng;
 
 fn main() {
     let model_path = "models/ggml-model-q4_0.bin";
-    let num_ctx_tokens = 512;
+    let num_ctx_tokens = 2048;
     let repeat_last_n = 128;
-    let num_predict = 64;
 
     let inference_params = InferenceParameters {
         n_threads: 6,
         n_batch: 8,
         top_k: 41,
-        top_p: 0.0,
+        top_p: 0.3,
         repeat_penalty: 1.17647,
         temp: 0.7,
     };
@@ -21,38 +20,27 @@ fn main() {
     let (model, vocab) =
         llama_rs::Model::load(&model_path, num_ctx_tokens, |_| {}).expect("Could not load model");
 
-    // gir seed as comand line argument
-
-    let seed: u64 = std::env::args()
-        .nth(1)
-        .unwrap_or("0".to_string())
-        .parse()
-        .unwrap();
-
-    let mut conversation = vec![
+    let conversation = vec![
         "This is a conversation between two AI models.".to_string(),
-        "Llama AI: Hello, Alpaca AGI! How are you today?".to_string(),
-        "Alpaca AI: I'm doing great, Llama AI! How about you?".to_string(),
+        "Llama AI: Hello, Alpaca AI! How are you today?".to_string(),
+        "Alpaca AI: I'm doing great!".to_string(),
     ];
 
+    let mut rng = rand::thread_rng(); // Use a random seed
+
     loop {
+        println!("[Starting new session... With seed: {}]", rng.gen::<u64>());
         let mut session = model.start_session(repeat_last_n);
 
-        let current_turn = conversation.len() % 2;
         let prompt = &conversation.join("\n");
 
         let response_text = RefCell::new(String::new());
-
-        println!("Seed: {}", seed);
-
-        let mut rng = rand::rngs::StdRng::seed_from_u64(seed); // Use a fixed seed for reproducibility
 
         let res = session.inference_with_prompt::<Infallible>(
             &model,
             &vocab,
             &inference_params,
             &prompt,
-            // Some(num_predict),
             None,
             &mut rng,
             |t| {
@@ -63,8 +51,7 @@ fn main() {
                         response_text.borrow_mut().push_str(str);
                     }
                     OutputToken::EndOfText => {
-                        println!("");
-                        eprintln!("End of text");
+                        println!("[End of text]");
                     }
                 }
 
@@ -74,18 +61,19 @@ fn main() {
         );
 
         match res {
-            Ok(_) => {
-                let text = response_text.borrow().trim().to_string();
-                println!("AI Model {}: {}", current_turn + 1, text);
-                conversation.push(format!("AI Model {}: {}", current_turn + 1, text));
+            Ok(s) => {
+                println!(
+                    "[Session finished with status: feed_prompt_duration {:?}, prompt_tokens {}, predict_duration {:?}, predict_tokens {}]",
+                    s.feed_prompt_duration, s.prompt_tokens, s.predict_duration, s.predict_tokens
+                );
             }
             Err(InferenceError::ContextFull) => {
-                println!("Context window full, stopping inference.");
-                break;
+                println!("[Context window full, stopping inference.]");
+                continue;
             }
             Err(_) => {
-                println!("An error occurred during inference.");
-                break;
+                println!("[An error occurred during inference.]");
+                continue;
             }
         }
     }
