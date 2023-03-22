@@ -5,8 +5,9 @@ use rand::Rng;
 
 fn main() {
     let model_path = "models/ggml-model-q4_0.bin";
-    let num_ctx_tokens = 2048;
-    let repeat_last_n = 128;
+    let num_ctx_tokens = 1024;
+    // let repeat_last_n = 128;
+    let repeat_last_n = num_ctx_tokens / 16;
 
     let inference_params = InferenceParameters {
         n_threads: 6,
@@ -20,7 +21,7 @@ fn main() {
     let (model, vocab) =
         llama_rs::Model::load(&model_path, num_ctx_tokens, |_| {}).expect("Could not load model");
 
-    let conversation = vec![
+    let mut conversation = vec![
         "This is a conversation between two AI models.".to_string(),
         "Llama AI: Hello, Alpaca AI! How are you today?".to_string(),
         "Alpaca AI: I'm doing great!".to_string(),
@@ -30,9 +31,17 @@ fn main() {
 
     loop {
         println!("[Starting new session... With seed: {}]", rng.gen::<u64>());
-        let mut session = model.start_session(repeat_last_n);
+        let mut session = model.start_session(repeat_last_n as usize);
 
-        let prompt = &conversation.join("\n");
+        let prompt = {
+            let instructional_prompt = &conversation[0];
+            let last_dialogue = if conversation.len() >= 3 {
+                conversation[conversation.len() - 2..].join("\n")
+            } else {
+                conversation[1..].join("\n")
+            };
+            format!("{}\n{}", instructional_prompt, last_dialogue)
+        };
 
         let response_text = RefCell::new(String::new());
 
@@ -59,6 +68,16 @@ fn main() {
                 Ok(())
             },
         );
+
+        let responses: Vec<String> = response_text
+            .borrow()
+            .trim()
+            .to_string()
+            .split('\n')
+            .map(|s| s.to_string())
+            .collect();
+
+        conversation.extend(responses);
 
         match res {
             Ok(s) => {
