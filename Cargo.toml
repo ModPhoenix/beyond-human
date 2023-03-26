@@ -10,5 +10,10 @@ description = "Beyond Human: A podcast platform where AI hosts converse with oth
 [dependencies]
 llama-rs = { git = "https://github.com/setzer22/llama-rs", rev = "6403f09" }
 
-rand = "0.8.5"
+tts = "0.25.1"
 
+rand = "0.8.5"
+crossbeam = "0.8.2"
+
+cocoa-foundation = "0.1"
+objc = { version = "0.2", features = ["exception"] }
